@@ -8,6 +8,7 @@ socketio = SocketIO(app)
 # creating databse and table if users
 db = sqlite3.connect('messenger.db',check_same_thread=False)
 db.execute('CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT, fname TEXT NOT NULL, lname TEXT NOT NULL)')
+db.execute('CREATE TABLE IF NOT EXISTS groups(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)')
 
 def query_db(query, args=(), one=False):
     cur = db.execute(query, args)
@@ -18,13 +19,13 @@ def query_db(query, args=(), one=False):
 
 @app.route('/')
 def welcome():
-    
+    query_db('insert into groups(name) values("general")')
     return render_template('Start.html')
 
 
 @app.route('/server')
 def Server():
-    return render_template('Server.html')
+    return render_template('Server.html',db = db)
 
 
 
@@ -69,6 +70,19 @@ def messageReceived(methods=['GET', 'POST']):
 def handle_my_custom_event(json, methodes=['GET', 'POST']):
     print('received my event: ' + str(json))
     socketio.emit('my response', json, callback=messageReceived)
+
+@socketio.on('connect')
+def test_connect():
+    socketio.emit('my response', {'data': 'Connected'})
+
+
+
+@socketio.on('disconnect')
+def test_disconnect():
+    socketio.emit('my response' ,'')
+    print('Client disconnected')
+
+
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
