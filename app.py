@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, join_room, leave_room
 import sqlite3
 
 app = Flask(__name__)
@@ -8,7 +8,7 @@ socketio = SocketIO(app)
 
 clients = []
 
-# creating databse and table if users
+# creating databse and tables 
 db = sqlite3.connect('messenger.db',check_same_thread=False)
 db.execute('DROP TABLE IF EXISTS users')
 db.execute('DROP TABLE IF EXISTS groups')
@@ -48,6 +48,7 @@ def Username(methods=['GET', 'POST']):
 @app.route('/username check')
 def CheckUsername(methods=['GET', 'POST']):
     
+    print(request.args.get('new group'))
     first_name = request.args.get('fname')
     last_name = request.args.get('lname')
     name_exist = query_db('select * from users where fname=? and lname=?',[first_name, last_name], one=True)
@@ -76,6 +77,15 @@ def messageReceived(methods=['GET', 'POST']):
     print('message was received!!!')
 
 
+
+@app.route('/new_group')
+def new_group(methods=['GET', 'POST']):
+    return render_template('new group.html')
+
+
+
+
+
 @socketio.on('my event')
 def handle_my_custom_event(json, methodes=['GET', 'POST']):
     
@@ -87,6 +97,8 @@ def handle_my_custom_event(json, methodes=['GET', 'POST']):
         first_name, last_name = name.split()
         clients.append(id)
         query_db('INSERT INTO users(socketid, fname, lname) VALUES(?, ?, ?)', args=[id, first_name, last_name])
+        join_room(room = room)
+
     
     print('received my event: ' + str(json))
     if (json.get('data') is not None):
@@ -108,7 +120,6 @@ def test_disconnect(methodes=['GET', 'POST']):
         clients.remove(request.sid)
         client = query_db('SELECT * FROM users WHERE socketid=?', args=[request.sid])
         name = client[0][2]+" "+client[0][3]+" has left..."
-        # name = fname+" "+lname+" has left..."
         json = {'user_name':name , 'message':''}
         socketio.emit('my response', json, callback=messageReceived , broadcast=True)
         query_db('DELETE FROM users WHERE socketid=?',args=[request.sid])

@@ -2,18 +2,16 @@
 <html>
 <body>
 
-<h1>Enter your name</h1>
+<h1>Enter group's name</h1>
 
 <form action="/username check">
   <label for="fname">First name:</label>
   <input type="text" id="fname" name="fname"><br><br>
   <label for="lname">Last name:</label>
   <input type="text" id="lname" name="lname"><br><br>
-  <input type="checkbox" id="new group" name="new group" value="False"/>creating new group<br>
   <input type="submit" value="Submit" onclick="">
 </form>
 
-  
   {% if duplicate == True%}
   <p><b>This name already exist!</b></p>
   {% endif %}
